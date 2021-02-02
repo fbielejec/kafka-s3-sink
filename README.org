@@ -1,0 +1,26 @@
+#+TITLE: kafka-demo
+
+* Development
+
+Start docker containers:
+#+BEGIN_SRC bash
+docker-compose -f docker-compose.yml up
+#+END_SRC
+
+Create the topic:
+
+#+BEGIN_SRC bash
+docker exec dev_kafka \
+kafka-topics --create \
+--zookeeper localhost:2181 \
+--replication-factor 1 \
+--partitions 1 \
+--topic events-stream
+#+END_SRC
+
+Publish message to topic:
+
+#+BEGIN_SRC bash
+docker exec dev_kafka \
+bash -c "echo -e 'FUBAR' | kafka-console-producer --broker-list localhost:9092 --topic events-stream"
+#+END_SRC

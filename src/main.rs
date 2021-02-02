@@ -55,6 +55,28 @@ async fn handle_event (config : &Config) {
         .subscribe(&t)
         .expect("Can't subscribe to specified topics");
 
+    loop {
+        match consumer.recv().await {
+            Err(why) => error!("Failed to read message: {}", why),
+            Ok(m) => {
+
+                // TODO : read payload (avro)
+
+                info!("key: '{:?}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
+                      m.key(), m.topic(), m.partition(), m.offset(), m.timestamp());
+
+                match consumer.commit_message(&m, CommitMode::Async) {
+                    Err(why) => error!("Failed to comit message offset: {}", why),
+                    Ok (_) => {
+                        info!("Commited message offset: {}", m.offset ());
+                    }
+                };
+
+            }
+
+        };
+    }
+
 }
 
 #[tokio::main]
@@ -62,7 +84,7 @@ async fn main() {
 
     let config = Config {
         log_level: get_env_var ("LOG_LEVEL", Some (String::from ("info"))),
-        topics: string_to_vector (&get_env_var ("KAFKA_TOPICS", Some (String::from ("events")))),
+        topics: string_to_vector (&get_env_var ("KAFKA_TOPICS", Some (String::from ("events-stream")))),
         broker: get_env_var ("KAFKA_BROKER", Some (String::from ("localhost:9092"))),
         group_id: get_env_var ("KAFKA_CONSUMER_GROUP_ID", Some (String::from ("event_consumers"))),
     };
@@ -73,6 +95,8 @@ async fn main() {
     let (_, version_s) = get_rdkafka_version();
     info!("librdkafka version: {}", version_s);
     info!("{:#?}", &config);
+
+    // TODO : ensure topics
 
     handle_event(&config).await
 }
