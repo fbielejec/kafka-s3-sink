@@ -31,7 +31,7 @@ impl ClientContext for CustomContext {}
 
 impl ConsumerContext for CustomContext {
     fn commit_callback(&self, result: KafkaResult<()>, offsets: &TopicPartitionList) {
-        info!("Committing offsets {:?}", offsets);
+        debug!("Committing offsets {:?}", offsets);
     }
 }
 
@@ -40,7 +40,6 @@ async fn handle_event (config : &Config) {
     let Config { group_id, broker, topic, ..} = config;
     let context = CustomContext;
 
-    // TODO: set offset
     let consumer: StreamConsumer<CustomContext> = ClientConfig::new()
         .set("group.id", group_id)
         .set("bootstrap.servers", broker)
@@ -55,6 +54,7 @@ async fn handle_event (config : &Config) {
         .subscribe(&[topic])
         .expect("Can't subscribe to specified topics");
 
+    // set offset for replaying
     let mut topic_map: HashMap<(String, i32), Offset> = HashMap::new ();
     topic_map.insert((String::from (topic), 0), Offset::Beginning);
     let tpl : TopicPartitionList = TopicPartitionList::from_topic_map (&topic_map).unwrap ();
@@ -69,6 +69,8 @@ async fn handle_event (config : &Config) {
 
                 info!("key: '{:?}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
                       m.key(), m.topic(), m.partition(), m.offset(), m.timestamp());
+
+                // TODO : store offset per payload type
 
                 match consumer.commit_message(&m, CommitMode::Async) {
                     Err(why) => error!("Failed to comit message offset: {}", why),

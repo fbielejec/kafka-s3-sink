@@ -1,5 +1,16 @@
 #+TITLE: kafka-demo
 
+* Prerequisites
+Install confluent hub client:
+
+#+BEGIN_SRC bash
+curl -O http://client.hub.confluent.io/confluent-hub-client-latest.tar.gz
+# add to .bashrc:
+export PATH="<path-to>/confluent-hub-client-latest/bin:$PATH"
+# test
+confluent-hub help
+#+END_SRC
+
 * Development
 
 Start docker containers:
@@ -10,9 +21,9 @@ docker-compose -f docker-compose.yml up
 Create the topic:
 
 #+BEGIN_SRC bash
-docker exec dev_kafka \
+docker exec broker \
 kafka-topics --create \
---zookeeper localhost:2181 \
+--zookeeper zookeeper:2181 \
 --replication-factor 1 \
 --partitions 1 \
 --topic events-stream
@@ -21,6 +32,6 @@ kafka-topics --create \
 Publish message to topic:
 
 #+BEGIN_SRC bash
-docker exec dev_kafka \
+docker exec broker \
 bash -c "echo -e 'FUBAR' | kafka-console-producer --broker-list localhost:9092 --topic events-stream"
 #+END_SRC
