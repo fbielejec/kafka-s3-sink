@@ -1,4 +1,5 @@
-#+TITLE: kafka-demo
+#+TITLE:    kafka-s3-sink
+#+SUBTITLE: research repository
 
 * Prerequisites
 Install confluent hub client:
