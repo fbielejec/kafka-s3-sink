@@ -2,8 +2,16 @@ mod schema;
 mod commands;
 mod commander;
 mod utils;
+mod config;
 
 use log::{debug, info, warn, error};
+use std::env;
+use std::thread;
+use std::time::{Instant, Duration};
+use tokio::runtime::Runtime;
+use tokio::time;
+use config::{Config, Load};
+
 // use rdkafka::client::ClientContext;
 // use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 // use rdkafka::consumer::stream_consumer::StreamConsumer;
@@ -14,11 +22,6 @@ use log::{debug, info, warn, error};
 // use rdkafka::util::{get_rdkafka_version, Timeout} ;
 // use std::collections::HashMap;
 // use std::convert::TryInto;
-use std::env;
-use std::time::{Instant, Duration};
-use tokio::time;
-use std::thread;
-use tokio::runtime::Runtime;
 // use futures::future::lazy;
 // use commander;
 
@@ -98,6 +101,11 @@ use tokio::runtime::Runtime;
 
 fn main() {
 
+    // let config = Config {};
+
+    let config : Config = Config::load();
+
+
     env::set_var("RUST_LOG", "info");
     env_logger::init();
 
@@ -124,61 +132,6 @@ fn main() {
         t2.await.expect ("Ooops!");
     });
 }
-
-// #[tokio::main]
-// async fn main() {
-
-    // let b1_blocking_task = || {
-    //     tokio::task::spawn_blocking(|| async {
-
-    //         let mut interval = time::interval(Duration::from_secs(2));
-    //         loop {
-    //             interval.tick().await;
-
-    //             info!("ping from: {:#?}", thread::current().id());
-
-    //         }
-
-    //         // let mut interval = time::interval(Duration::from_secs(2));
-
-    //         // interval.tick().await;
-
-    //         info!("ping from: {:#?}", thread::current().id());
-
-    //         // let mut button = Button::new(19);
-    //         // button.wait_for_press(None); // blocks here
-
-    //     })
-    // };
-
-    // let b2_blocking_task = || {
-    //     tokio::task::spawn_blocking(|| async {
-
-    //         // let mut interval = time::interval(Duration::from_secs(4));
-
-    //         // interval.tick().await;
-
-    //         info!("ping from: {:#?}", thread::current().id());
-
-    //         // let mut button = Button::new(26);
-    //         // button.wait_for_press(None); // blocks here
-
-    //     })
-    // };
-
-    // loop {
-    //     // forever listen
-    //     tokio::select! {
-    //       _ = b1_blocking_task() => {
-    //           info!("Task 1 finished")
-    //       }
-    //       _ = b2_blocking_task() => {
-    //           info!("Task 2 finished")
-    //       }
-    //     };
-    // }
-// }
-
 
 // #[tokio::main]
 // async fn main() {

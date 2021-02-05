@@ -37,7 +37,3 @@ fn update_value() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejec
         // .and(with_db(db))
         .and_then(commands::update_value)
 }
-
-// fn json_body() -> impl Filter<Extract = (Customer,), Error = warp::Rejection> + Clone {
-//     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
-// }
