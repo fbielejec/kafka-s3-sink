@@ -1,7 +1,9 @@
-#+TITLE:    kafka-s3-sink
-#+SUBTITLE: research repository
+#+TITLE:    withkafka
+#+SUBTITLE: event sourcing research repository
 
 * Prerequisites
+** TODO Event Sourcing
+** Software
 Install confluent hub client:
 
 #+BEGIN_SRC bash
@@ -20,7 +22,26 @@ Start docker containers:
 docker-compose -f docker-compose.yml up
 #+END_SRC
 
-Start message produces (takes care of creating the topic):
+Start watcher
+
+#+BEGIN_SRC bash
+cargo watch -s "cargo run"
+#+END_SRC
+
+Send some commands:
+
+#+BEGIN_SRC bash
+curl -d '{"value": 2}' -H "Content-Type: application/json" -X POST http://localhost:3030/values
+#+END_SRC
+
+#+BEGIN_SRC bash
+curl -d '{"operation": "ADD", "value": 3}' -H "Content-Type: application/json" -X PUT http://localhost:3030/values/123e4567-e89b-12d3-a456-426614174000
+#+END_SRC
+
+
+
+
+Start message producer (takes care of creating the topic):
 
 #+BEGIN_SRC bash
 docker exec -it schema-registry \
@@ -43,7 +64,7 @@ Publish some message to the topic:
 
 * IN-PROGRESS S3 sink connector
 
-Start worker (see https://docs.confluent.io/kafka-connect-s3-sink/current/index.html#basic-example for the explanation of config values):
+Start worker (see explanation of the [[https://docs.confluent.io/kafka-connect-s3-sink/current/index.html#basic-example][config values]]):
 
 #+BEGIN_SRC bash
 curl -X POST \
