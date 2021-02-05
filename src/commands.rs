@@ -1,30 +1,21 @@
 use crate::schema::{Value, Operation};
 use log::{debug, info, warn, error};
-use rdkafka::config::ClientConfig;
-use rdkafka::message::OwnedHeaders;
-use rdkafka::producer::{FutureProducer, FutureRecord};
-use rdkafka::util::get_rdkafka_version;
 use std::convert::Infallible;
 use uuid::Uuid;
 use warp::http::StatusCode;
+use crate::producer::Producer;
 
 // TODO : publish a command to commands topic
 
 pub async fn create_value(
     value: Value,
-    // db: Db,
-) -> Result<impl warp::Reply, Infallible> {
+    producer: Producer)
+    -> Result<impl warp::Reply, Infallible> {
 
     info!("Create value {:#?}", value);
 
     let uuid = Uuid::new_v4();
 
-    // TODO
-    let producer: &FutureProducer = &ClientConfig::new()
-        .set("bootstrap.servers", "brokers")
-        .set("message.timeout.ms", "5000")
-        .create()
-        .expect("Producer creation error");
 
 
 

@@ -6,14 +6,22 @@ use warp::Filter;
 use warp::http::StatusCode;
 use uuid::Uuid;
 use log::{debug, info, warn, error};
+use crate::config::{Config};
+use crate::producer;
+use crate::producer::Producer;
 
 // writes to commands topic
 // enforces schema
 
-pub async fn run () {
+pub async fn run (config: Config) {
 
-    let routes = create_value()
+
+    let producer = producer::init (&config);
+
+    let routes = create_value(producer)
         .or(update_value());
+
+
 
     warp::serve(routes)
         .run(([127, 0, 0, 1], 3030))
@@ -21,11 +29,11 @@ pub async fn run () {
 }
 
 /// POST /values {"value" : 2 }
-fn create_value() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+fn create_value(producer : Producer) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path("values")
         .and(warp::post())
         .and(warp::body::json())
-        // .and(with_db(db))
+        .and(with_producer(producer))
         .and_then(commands::create_value)
 }
 
@@ -36,4 +44,12 @@ fn update_value() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejec
         .and(warp::body::json())
         // .and(with_db(db))
         .and_then(commands::update_value)
+}
+
+fn with_producer(producer: Producer) -> impl Filter<Extract = (Producer,), Error = Infallible> + Clone {
+    warp::any().map(move || producer.clone())
+}
+
+fn with_config(config: Config) -> impl Filter<Extract = (Config,), Error = Infallible> + Clone {
+    warp::any().map(move || config.clone())
 }

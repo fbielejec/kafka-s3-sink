@@ -3,6 +3,7 @@ mod commands;
 mod commander;
 mod utils;
 mod config;
+mod producer;
 
 use log::{debug, info, warn, error};
 use std::env;
@@ -101,22 +102,20 @@ use config::{Config, Load};
 
 fn main() {
 
-    // let config = Config {};
-
     let config : Config = Config::load();
 
-
-    env::set_var("RUST_LOG", "info");
+    env::set_var("RUST_LOG", &config.log_level);
     env_logger::init();
 
+    info!("{:#?}", &config);
+
     // Create the runtime
-    let rt  = Runtime::new().unwrap ();
+    let rt = Runtime::new().unwrap ();
 
     // Spawn the root task
     rt.block_on(async {
-
         let t1 = tokio::spawn(async {
-            commander::run ().await;
+            commander::run (config).await;
         });
 
         let t2 = tokio::spawn(async {
