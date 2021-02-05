@@ -1,22 +1,32 @@
+use crate::config::{Config};
+use crate::producer::Producer;
 use crate::schema::{Value, Operation};
 use log::{debug, info, warn, error};
 use std::convert::Infallible;
 use uuid::Uuid;
 use warp::http::StatusCode;
-use crate::producer::Producer;
 
 // TODO : publish a command to commands topic
 
 pub async fn create_value(
     value: Value,
-    producer: Producer)
+    producer: Producer,
+    config: Config)
     -> Result<impl warp::Reply, Infallible> {
 
     info!("Create value {:#?}", value);
 
     let uuid = Uuid::new_v4();
 
-
+    // producer
+    //     .send(
+    //         FutureRecord::to(topic_name)
+    //             .payload(&format!("Message {}", i))
+    //             .key(&format!("Key {}", i))
+    //             // .headers(OwnedHeaders::new().add("header_key", "header_value")),
+    //         Duration::from_secs(0),
+    //     )
+    //     .await;
 
 
     Ok(warp::reply::json(&uuid))

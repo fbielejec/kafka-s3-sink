@@ -15,13 +15,9 @@ use crate::producer::Producer;
 
 pub async fn run (config: Config) {
 
-
     let producer = producer::init (&config);
-
-    let routes = create_value(producer)
+    let routes = create_value(producer, config)
         .or(update_value());
-
-
 
     warp::serve(routes)
         .run(([127, 0, 0, 1], 3030))
@@ -29,11 +25,14 @@ pub async fn run (config: Config) {
 }
 
 /// POST /values {"value" : 2 }
-fn create_value(producer : Producer) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+fn create_value(producer : Producer,
+                config: Config)
+                -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path("values")
         .and(warp::post())
         .and(warp::body::json())
         .and(with_producer(producer))
+        .and(with_config(config))
         .and_then(commands::create_value)
 }
 
