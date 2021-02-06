@@ -9,11 +9,14 @@ use log::{debug, info, warn, error};
 use crate::config::{Config};
 use crate::producer;
 use crate::producer::Producer;
+use std::sync::Arc;
 
 // writes to commands topic
 // enforces schema
 
-pub async fn run (config: Config) {
+pub async fn run (config: Arc<Config>) {
+
+    let config = &*config;
 
     let producer = producer::init (&config);
     let routes = create_value(producer.clone (), config.clone ())

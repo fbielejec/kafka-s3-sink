@@ -14,10 +14,12 @@ use tokio::runtime::Runtime;
 use tokio::time;
 use config::{Config, Load};
 use std::boxed::Box;
+use std::sync::Arc;
+
 
 fn main() {
 
-    let config : Config = Config::load();
+    let config = Arc::new (Config::load());
 
     env::set_var("RUST_LOG", &config.log_level);
     env_logger::init();
@@ -28,21 +30,16 @@ fn main() {
     let rt = Runtime::new().unwrap ();
 
     // Spawn the root task
-    rt.block_on(async {
-        let t1 = tokio::spawn(async {
-            // let config = config.clone ();
-            commander::run ( config).await;
+    rt.block_on(async  {
+
+        let config_rc1 = Arc::clone(&config);
+        let t1 = tokio::spawn(async move {
+            commander::run ( config_rc1 ).await;
         });
 
-        let t2 = tokio::spawn(async {
-            // let mut interval = time::interval(Duration::from_secs(10));
-            // loop {
-            //     interval.tick().await;
-            //     info!("ping2 from: {:#?}", thread::current().id());
-
-            // }
-
-            // command_processor::run (Box::new (config)).await;
+        let config_rc2 = Arc::clone(&config);
+        let t2 = tokio::spawn(async move {
+            command_processor::run ( config_rc2 ).await;
 
         });
 

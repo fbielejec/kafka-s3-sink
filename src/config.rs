@@ -5,6 +5,7 @@ use std::env;
 pub struct Config {
     pub log_level: String,
     pub commands_topic: String,
+    pub commands_group_id: String,
     pub broker: String,
 }
 
@@ -17,7 +18,8 @@ impl Load for Config {
     fn load() -> Config {
         Config {
             log_level: get_env_var ("LOG_LEVEL", Some (String::from ("info"))),
-            commands_topic: get_env_var ("KAFKA_TOPICS", Some (String::from ("commands"))),
+            commands_topic: get_env_var ("KAFKA_COMMANDS_TOPICS", Some (String::from ("commands"))),
+            commands_group_id: get_env_var ("KAFKA_COMMANDS_GROUP_ID", Some (String::from ("commands-processors"))),
             broker: get_env_var ("KAFKA_BROKER", Some (String::from ("localhost:9092"))),
         }
     }

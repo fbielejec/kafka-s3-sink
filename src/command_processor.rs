@@ -9,6 +9,7 @@ use rdkafka::util::{get_rdkafka_version, Timeout} ;
 use log::{debug, info, warn, error};
 use std::collections::HashMap;
 use crate::config::{Config, Load};
+use std::sync::Arc;
 
 struct CustomContext;
 
@@ -20,13 +21,13 @@ impl ConsumerContext for CustomContext {
     }
 }
 
-pub async fn run (config : Config) {
+pub async fn run (config : Arc<Config>) {
 
-    let Config { broker, commands_topic, ..} = config;
+    let Config { broker, commands_group_id, commands_topic, ..} = &*config;
     let context = CustomContext;
 
     let consumer: StreamConsumer<CustomContext> = ClientConfig::new()
-        // .set("group.id", group_id)
+        .set("group.id", commands_group_id)
         .set("bootstrap.servers", broker)
         .set("enable.partition.eof", "false")
         .set("session.timeout.ms", "6000")
