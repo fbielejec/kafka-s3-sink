@@ -12,7 +12,7 @@ use warp::http::StatusCode;
 use serde_json;
 use std::time::Duration;
 
-// TODO : avro
+// TODO : serialize as avro
 pub async fn create_value(
     value: Value,
     producer: Producer,
@@ -31,7 +31,6 @@ pub async fn create_value(
 
     let payload : String = serde_json::to_string(&command).expect ("Could not serialize command");
 
-
     match producer.send(FutureRecord::to(&config.commands_topic)
                         .payload(&payload)
                         .key(&format!("{}", &command.id)),
@@ -47,10 +46,12 @@ pub async fn create_value(
     Ok(warp::reply::json(&uuid))
 }
 
+// TODO
 pub async fn update_value(
     id: Uuid,
-    operation : Operation
-    // db: Db,
+    operation : Operation,
+    producer: Producer,
+    config: Config
 ) -> Result<impl warp::Reply, Infallible> {
 
     info!("Update value {:#?} with {:#?}", id, operation);
