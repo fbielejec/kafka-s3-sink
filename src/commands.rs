@@ -21,17 +21,9 @@ pub async fn create_value(
     config: Config
 ) -> Result<impl warp::Reply, Infallible> {
 
-    // info!("Received {:#?}", value);
-
-    // let value_id = Uuid::new_v4();
+    info!("Received {:#?}", initial_value);
 
     let producer = producer.lock().await;
-
-    // let command = CreateValueCommand { id: Uuid::new_v4(),
-    //                                    action: ActionType::CREATE_VALUE,
-    //                                    data: Value { id : Uuid::new_v4(),
-    //                                                  value : initial_value.value }};
-
     let command_id = Uuid::new_v4();
     let value_id = Uuid::new_v4();
     let command = Command::CREATE_VALUE { id: command_id,

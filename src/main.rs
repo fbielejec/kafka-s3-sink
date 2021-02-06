@@ -6,6 +6,7 @@ mod config;
 mod inputs_schema;
 mod producer;
 mod utils;
+mod events_schema;
 
 use config::{Config, Load};
 use log::{debug, info, warn, error};
