@@ -1,33 +1,48 @@
 use crate::config::{Config};
 use crate::producer::Producer;
-use crate::schema::{Value, Operation};
+use crate::schema::{Value, Operation, Command, ActionType};
 use log::{debug, info, warn, error};
+use maplit::hashmap;
+use rdkafka::config::ClientConfig;
+use rdkafka::message::OwnedHeaders;
+use rdkafka::producer::{FutureProducer, FutureRecord};
 use std::convert::Infallible;
 use uuid::Uuid;
 use warp::http::StatusCode;
+use serde_json;
+use std::time::Duration;
 
-// TODO : publish a command to commands topic
-
+// TODO : avro
 pub async fn create_value(
     value: Value,
     producer: Producer,
-    config: Config)
-    -> Result<impl warp::Reply, Infallible> {
+    config: Config
+) -> Result<impl warp::Reply, Infallible> {
 
-    info!("Create value {:#?}", value);
+    info!("Received {:#?}", value);
 
     let uuid = Uuid::new_v4();
 
-    // producer
-    //     .send(
-    //         FutureRecord::to(topic_name)
-    //             .payload(&format!("Message {}", i))
-    //             .key(&format!("Key {}", i))
-    //             // .headers(OwnedHeaders::new().add("header_key", "header_value")),
-    //         Duration::from_secs(0),
-    //     )
-    //     .await;
+    let producer = producer.lock().await;
 
+    let command = Command { id: uuid,
+                            action: ActionType::CREATE_VALUE,
+                            data: hashmap!{String::from ("value") => format! ("{}", value.value)} };
+
+    let payload : String = serde_json::to_string(&command).expect ("Could not serialize command");
+
+
+    match producer.send(FutureRecord::to(&config.commands_topic)
+                        .payload(&payload)
+                        .key(&format!("{}", &command.id)),
+                        Duration::from_secs(0)).await {
+        Ok(_) => {
+            info!("Succesfully sent command {:#?} to topic {}", command, &config.commands_topic)
+        },
+        Err(why) => {
+            warn!("Error sending command: {:#?}", why)
+        },
+    };
 
     Ok(warp::reply::json(&uuid))
 }
@@ -40,14 +55,6 @@ pub async fn update_value(
 
     info!("Update value {:#?} with {:#?}", id, operation);
 
-    // let mut customers = db.lock().await;
-
-    // for customer in customers.iter_mut() {
-    //     if customer.guid == guid {
-    //         *customer = updated_customer;
-    //         return Ok(StatusCode::OK);
-    //     }
-    // }
 
     Ok(StatusCode::NOT_FOUND)
 }

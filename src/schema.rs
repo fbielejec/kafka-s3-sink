@@ -1,6 +1,8 @@
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-/// Input schema
+/// Inputs schema
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Value {
@@ -23,4 +25,17 @@ pub struct Operation {
     pub value: f64,
 }
 
-// TODO commands schema
+/// TODO Commands schema
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum ActionType {
+    CREATE_VALUE,
+    UPDATE_VALUE,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Command {
+    pub id: Uuid,
+    pub action: ActionType,
+    pub data: HashMap<String, String>
+}
