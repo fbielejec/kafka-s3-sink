@@ -1,3 +1,6 @@
+use crate::config::{Config, Load};
+use crate::schema::{Command, ActionType};
+use log::{debug, info, warn, error};
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
@@ -6,10 +9,11 @@ use rdkafka::error::KafkaResult;
 use rdkafka::message::{Headers, Message};
 use rdkafka::topic_partition_list::{TopicPartitionList, Offset};
 use rdkafka::util::{get_rdkafka_version, Timeout} ;
-use log::{debug, info, warn, error};
+use serde_json;
 use std::collections::HashMap;
-use crate::config::{Config, Load};
 use std::sync::Arc;
+use crate::producer;
+use crate::producer::Producer;
 
 struct CustomContext;
 
@@ -23,8 +27,10 @@ impl ConsumerContext for CustomContext {
 
 pub async fn run (config : Arc<Config>) {
 
-    let Config { broker, commands_group_id, commands_topic, ..} = &*config;
+    let Config { broker, commands_group_id, commands_topic, .. } = &*config;
     let context = CustomContext;
+
+    let producer = producer::init (&config);
 
     let consumer: StreamConsumer<CustomContext> = ClientConfig::new()
         .set("group.id", commands_group_id)
@@ -36,8 +42,7 @@ pub async fn run (config : Arc<Config>) {
         .create_with_context(context)
         .expect("Consumer creation failed");
 
-    consumer
-        .subscribe(&[&commands_topic])
+    consumer.subscribe(&[&commands_topic])
         .expect("Can't subscribe to specified topics");
 
     // set offset for replaying
@@ -47,27 +52,56 @@ pub async fn run (config : Arc<Config>) {
     consumer.assign (&tpl);
 
     loop {
+
+        // TODO : store offset
+        // TODO : validate against state db
+        // TODO : emit events
+
         match consumer.recv().await {
             Err(why) => error!("Failed to read message: {}", why),
             Ok(m) => {
-
-                // TODO : read payload (avro)
-
-                info!("key: '{:?}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
-                      m.key(), m.topic(), m.partition(), m.offset(), m.timestamp());
-
-                // TODO : store offset per payload type
+                    match m.payload_view::<str>() {
+                        None => {
+                            warn!("Empty command payload");
+                        },
+                        Some(Ok(payload)) => {
+                            // TODO : avro
+                            match serde_json::from_str::<Command>(payload) {
+                                Ok (command) => {
+                                    info!("Received command: {:?}, partition: {}, offset: {}, timestamp: {:?}", command, m.partition(), m.offset(), m.timestamp());
+                                    validate (&command, producer.clone ());
+                                },
+                                Err (why) => {
+                                    warn!("Could not deserialize command: {:?}", why);
+                                }
+                            };
+                        },
+                        Some(Err(e)) => {
+                            warn!("Error while deserializing command payload: {:?}", e);
+                        }
+                    };
 
                 match consumer.commit_message(&m, CommitMode::Async) {
-                    Err(why) => error!("Failed to comit message offset: {}", why),
+                    Err(why) => error!("Failed to commit message offset: {}", why),
                     Ok (_) => {
-                        info!("Commited message offset: {}", m.offset ());
+                        debug!("Commited message offset: {}", m.offset ());
                     }
                 };
 
             }
-
         };
+
     }
+}
+
+/// implements business logic
+fn validate (
+    command: &Command,
+    producer : Producer
+) {
+
+
+
+
 
 }

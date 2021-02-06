@@ -25,13 +25,15 @@ pub struct Operation {
     pub value: f64,
 }
 
-/// TODO Commands schema
+/// Commands schema
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum ActionType {
     CREATE_VALUE,
     UPDATE_VALUE,
 }
+
+// TODO : timestamp
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Command {
