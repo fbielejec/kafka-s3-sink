@@ -1,6 +1,6 @@
 use crate::config::{Config};
 use crate::producer::Producer;
-use crate::commands_schema::{CreateValueCommand, ActionType, Value};
+use crate::commands_schema::{Command, Value};
 use crate::inputs_schema::{ ValueInput };
 
 use log::{debug, info, warn, error};
@@ -27,20 +27,22 @@ pub async fn create_value(
 
     let producer = producer.lock().await;
 
-    let command = CreateValueCommand { id: Uuid::new_v4(),
-                                       action: ActionType::CREATE_VALUE,
-                                       data: Value { id : Uuid::new_v4(),
-                                                     value : initial_value.value }
+    // let command = CreateValueCommand { id: Uuid::new_v4(),
+    //                                    action: ActionType::CREATE_VALUE,
+    //                                    data: Value { id : Uuid::new_v4(),
+    //                                                  value : initial_value.value }};
 
-                                       // data: hashmap!{String::from ("value") => format! ("{}", value.value)}
-
-    };
+    let command_id = Uuid::new_v4();
+    let value_id = Uuid::new_v4();
+    let command = Command::CREATE_VALUE { id: command_id,
+                                          data: Value { id : value_id,
+                                                        value : initial_value.value }};
 
     let payload : String = serde_json::to_string(&command).expect ("Could not serialize command");
 
     match producer.send(FutureRecord::to(&config.commands_topic)
                         .payload(&payload)
-                        .key(&format!("{}", &command.id)),
+                        .key(&format!("{}", &command_id)),
                         Duration::from_secs(0)).await {
         Ok(_) => {
             info!("Succesfully sent command {:#?} to topic {}", command, &config.commands_topic)
@@ -50,7 +52,7 @@ pub async fn create_value(
         },
     };
 
-    Ok(warp::reply::json(&command.data.id))
+    Ok(warp::reply::json(&value_id))
 }
 
 // TODO

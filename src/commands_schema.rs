@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -17,8 +16,8 @@ pub struct Value {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct CreateValueCommand {
-    pub id: Uuid,
-    pub action: ActionType,
-    pub data: Value //HashMap<String, String>
+#[serde(tag = "action")]
+pub enum Command {
+    CREATE_VALUE {id: Uuid,  data: Value } ,
+    UPDATE_VALUE {id: Uuid, }
 }

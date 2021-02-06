@@ -1,7 +1,7 @@
 use crate::config::{Config, Load};
 use crate::producer::Producer;
 use crate::producer;
-use crate::commands_schema::{CreateValueCommand};
+use crate::commands_schema::{Command};
 use log::{debug, info, warn, error};
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
@@ -78,16 +78,16 @@ pub async fn run (config : Arc<Config>) {
                         // TODO : run validation
 
                         // TODO : read avro
-                        // match serde_json::from_str::<Command>(payload) {
-                        //     Ok (command) => {
-                        //         info!("Received command: {:?}, partition: {}, offset: {}, timestamp: {:?}", command, m.partition(), m.offset(), m.timestamp());
-                        //         validate (&command, &mut db, producer.clone ());
-                        //     },
-                        //     Err (why) => {
-                        //         error!("Could not deserialize command: {:?}", why);
-                        //         // TODO : emit command_rejected
-                        //     }
-                        // };
+                        match serde_json::from_str::<Command>(payload) {
+                            Ok (command) => {
+                                info!("Received command: {:?}, partition: {}, offset: {}, timestamp: {:?}", command, m.partition(), m.offset(), m.timestamp());
+                                // validate (&command, &mut db, producer.clone ());
+                            },
+                            Err (why) => {
+                                error!("Could not deserialize command: {:?}", why);
+                                // TODO : emit command_rejected
+                            }
+                        };
 
 
                     },
