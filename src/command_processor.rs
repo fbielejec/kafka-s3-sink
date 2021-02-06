@@ -1,19 +1,25 @@
 use crate::config::{Config, Load};
-use crate::schema::{Command, ActionType};
+use crate::producer::Producer;
+use crate::producer;
+use crate::commands_schema::{CreateValueCommand};
 use log::{debug, info, warn, error};
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::{CommitMode, Consumer, ConsumerContext, Rebalance};
 use rdkafka::error::KafkaResult;
+use rdkafka::message::OwnedHeaders;
 use rdkafka::message::{Headers, Message};
+use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::topic_partition_list::{TopicPartitionList, Offset};
 use rdkafka::util::{get_rdkafka_version, Timeout} ;
 use serde_json;
 use std::collections::HashMap;
 use std::sync::Arc;
-use crate::producer;
-use crate::producer::Producer;
+use uuid::Uuid;
+use rusqlite::NO_PARAMS;
+use rusqlite::{Connection, Result};
+
 
 struct CustomContext;
 
@@ -30,8 +36,8 @@ pub async fn run (config : Arc<Config>) {
     let Config { broker, commands_group_id, commands_topic, .. } = &*config;
     let context = CustomContext;
 
+    let mut db = HashMap::<Uuid, f64>::new();
     let producer = producer::init (&config);
-
     let consumer: StreamConsumer<CustomContext> = ClientConfig::new()
         .set("group.id", commands_group_id)
         .set("bootstrap.servers", broker)
@@ -43,7 +49,7 @@ pub async fn run (config : Arc<Config>) {
         .expect("Consumer creation failed");
 
     consumer.subscribe(&[&commands_topic])
-        .expect("Can't subscribe to specified topics");
+        .expect("Can't subscribe to specified topic");
 
     // set offset for replaying
     let mut topic_map: HashMap<(String, i32), Offset> = HashMap::new ();
@@ -60,26 +66,36 @@ pub async fn run (config : Arc<Config>) {
         match consumer.recv().await {
             Err(why) => error!("Failed to read message: {}", why),
             Ok(m) => {
-                    match m.payload_view::<str>() {
-                        None => {
-                            warn!("Empty command payload");
-                        },
-                        Some(Ok(payload)) => {
-                            // TODO : avro
-                            match serde_json::from_str::<Command>(payload) {
-                                Ok (command) => {
-                                    info!("Received command: {:?}, partition: {}, offset: {}, timestamp: {:?}", command, m.partition(), m.offset(), m.timestamp());
-                                    validate (&command, producer.clone ());
-                                },
-                                Err (why) => {
-                                    warn!("Could not deserialize command: {:?}", why);
-                                }
-                            };
-                        },
-                        Some(Err(e)) => {
-                            warn!("Error while deserializing command payload: {:?}", e);
-                        }
-                    };
+                match m.payload_view::<str>() {
+                    None => {
+                        warn!("Empty command payload");
+                    },
+                    Some(Ok(payload)) => {
+
+                        info!("payload: {}", payload);
+
+                        // TODO : match command trait
+                        // TODO : run validation
+
+                        // TODO : read avro
+                        // match serde_json::from_str::<Command>(payload) {
+                        //     Ok (command) => {
+                        //         info!("Received command: {:?}, partition: {}, offset: {}, timestamp: {:?}", command, m.partition(), m.offset(), m.timestamp());
+                        //         validate (&command, &mut db, producer.clone ());
+                        //     },
+                        //     Err (why) => {
+                        //         error!("Could not deserialize command: {:?}", why);
+                        //         // TODO : emit command_rejected
+                        //     }
+                        // };
+
+
+                    },
+                    Some(Err(e)) => {
+                        error!("Error while deserializing command payload: {:?}", e);
+                        // TODO : emit command_rejected
+                    }
+                };
 
                 match consumer.commit_message(&m, CommitMode::Async) {
                     Err(why) => error!("Failed to commit message offset: {}", why),
@@ -94,14 +110,39 @@ pub async fn run (config : Arc<Config>) {
     }
 }
 
-/// implements business logic
-fn validate (
-    command: &Command,
-    producer : Producer
-) {
+// TODO
+
+// /// implements business logic
+// fn validate (
+//     command: &Command,
+//     db : &mut HashMap<Uuid, f64>,
+//     producer : Producer
+// ) {
+//     match command.action {
+//         ActionType::CREATE_VALUE => {
+
+//             // if !db.contains_key(command) {
+
+//             // }
+
+//             // unique id?
+//             // TODO : persist
+
+//             // emit value_created
+
+//         },
+//         ActionType::UPDATE_VALUE => {
+
+//             // TODO : exists?
+
+//             // emit value_updated
+
+//             // let uuid = Uuid::new_v4();
+
+//         }
+
+//     }
 
 
 
-
-
-}
+// }

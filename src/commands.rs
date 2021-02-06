@@ -1,6 +1,8 @@
 use crate::config::{Config};
 use crate::producer::Producer;
-use crate::schema::{Value, Operation, Command, ActionType};
+use crate::commands_schema::{CreateValueCommand, ActionType, Value};
+use crate::inputs_schema::{ ValueInput };
+
 use log::{debug, info, warn, error};
 use maplit::hashmap;
 use rdkafka::config::ClientConfig;
@@ -14,20 +16,25 @@ use std::time::Duration;
 
 // TODO : serialize as avro
 pub async fn create_value(
-    value: Value,
+    initial_value: ValueInput,
     producer: Producer,
     config: Config
 ) -> Result<impl warp::Reply, Infallible> {
 
-    info!("Received {:#?}", value);
+    // info!("Received {:#?}", value);
 
-    let uuid = Uuid::new_v4();
+    // let value_id = Uuid::new_v4();
 
     let producer = producer.lock().await;
 
-    let command = Command { id: uuid,
-                            action: ActionType::CREATE_VALUE,
-                            data: hashmap!{String::from ("value") => format! ("{}", value.value)} };
+    let command = CreateValueCommand { id: Uuid::new_v4(),
+                                       action: ActionType::CREATE_VALUE,
+                                       data: Value { id : Uuid::new_v4(),
+                                                     value : initial_value.value }
+
+                                       // data: hashmap!{String::from ("value") => format! ("{}", value.value)}
+
+    };
 
     let payload : String = serde_json::to_string(&command).expect ("Could not serialize command");
 
@@ -43,19 +50,19 @@ pub async fn create_value(
         },
     };
 
-    Ok(warp::reply::json(&uuid))
+    Ok(warp::reply::json(&command.data.id))
 }
 
 // TODO
-pub async fn update_value(
-    id: Uuid,
-    operation : Operation,
-    producer: Producer,
-    config: Config
-) -> Result<impl warp::Reply, Infallible> {
+// pub async fn update_value(
+//     id: Uuid,
+//     operation : Operation,
+//     producer: Producer,
+//     config: Config
+// ) -> Result<impl warp::Reply, Infallible> {
 
-    info!("Update value {:#?} with {:#?}", id, operation);
+//     info!("Update value {:#?} with {:#?}", id, operation);
 
 
-    Ok(StatusCode::NOT_FOUND)
-}
+//     Ok(StatusCode::NOT_FOUND)
+// }

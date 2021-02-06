@@ -20,3 +20,4 @@ maplit = "1.0.2"
 avro-rs = { version = "0.13", features = ["snappy"] }
 serde_derive = "1.0.123"
 warp = "0.3"
+rusqlite = "0.24.2"

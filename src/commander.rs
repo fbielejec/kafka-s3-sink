@@ -20,7 +20,8 @@ pub async fn run (config: Arc<Config>) {
 
     let producer = producer::init (&config);
     let routes = create_value(producer.clone (), config.clone ())
-        .or(update_value(producer.clone (), config.clone ()));
+        // .or(update_value(producer.clone (), config.clone ()))
+        ;
 
     warp::serve(routes)
         .run(([127, 0, 0, 1], 3030))
@@ -41,17 +42,17 @@ fn create_value(
 }
 
 /// PUT /values/:id {"operation" : "add", "value" : 2 }
-fn update_value(
-    producer : Producer,
-    config: Config
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::path!("values" / Uuid)
-        .and(warp::put())
-        .and(warp::body::json())
-        .and(with_producer(producer))
-        .and(with_config(config))
-        .and_then(commands::update_value)
-}
+// fn update_value(
+//     producer : Producer,
+//     config: Config
+// ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+//     warp::path!("values" / Uuid)
+//         .and(warp::put())
+//         .and(warp::body::json())
+//         .and(with_producer(producer))
+//         .and(with_config(config))
+//         .and_then(commands::update_value)
+// }
 
 fn with_producer(producer: Producer) -> impl Filter<Extract = (Producer,), Error = Infallible> + Clone {
     warp::any().map(move || producer.clone())
