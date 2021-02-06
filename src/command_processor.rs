@@ -1,7 +1,9 @@
 use crate::config::{Config, Load};
 use crate::producer::Producer;
 use crate::producer;
-use crate::commands_schema::{Command};
+use crate::commands_schema::{Command, Value};
+use crate::commands_schema::ActionType::CREATE_VALUE;
+use crate::commands_schema::ActionType::UPDATE_VALUE;
 use log::{debug, info, warn, error};
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
@@ -82,6 +84,16 @@ pub async fn run (config : Arc<Config>) {
                             Ok (command) => {
                                 info!("Received command: {:?}, partition: {}, offset: {}, timestamp: {:?}", command, m.partition(), m.offset(), m.timestamp());
                                 // validate (&command, &mut db, producer.clone ());
+
+                                match command {
+                                    Command::CREATE_VALUE{id, data} => validate_create_value (id, data, &mut db, producer.clone ()),
+                                    Command::UPDATE_VALUE {..} => {
+
+                                        warn!("TODO");
+
+                                    },
+                                };
+
                             },
                             Err (why) => {
                                 error!("Could not deserialize command: {:?}", why);
@@ -113,36 +125,13 @@ pub async fn run (config : Arc<Config>) {
 // TODO
 
 // /// implements business logic
-// fn validate (
-//     command: &Command,
-//     db : &mut HashMap<Uuid, f64>,
-//     producer : Producer
-// ) {
-//     match command.action {
-//         ActionType::CREATE_VALUE => {
+fn validate_create_value (
+    id: Uuid,
+    data : Value,
+    db : &mut HashMap<Uuid, f64>,
+    producer : Producer
+) {
 
-//             // if !db.contains_key(command) {
+    // command
 
-//             // }
-
-//             // unique id?
-//             // TODO : persist
-
-//             // emit value_created
-
-//         },
-//         ActionType::UPDATE_VALUE => {
-
-//             // TODO : exists?
-
-//             // emit value_updated
-
-//             // let uuid = Uuid::new_v4();
-
-//         }
-
-//     }
-
-
-
-// }
+}
