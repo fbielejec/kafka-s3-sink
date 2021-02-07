@@ -1,7 +1,7 @@
 use crate::config::{Config};
 use crate::producer::Producer;
-use crate::commands_schema::{Command, Value};
-use crate::inputs_schema::{ ValueInput };
+use crate::commands_schema::{Command, Value, UpdateOperation};
+use crate::inputs_schema::{ ValueInput, ValueOperationInput };
 
 use log::{debug, info, warn, error};
 use maplit::hashmap;
@@ -21,15 +21,14 @@ pub async fn create_value(
     config: Config
 ) -> Result<impl warp::Reply, Infallible> {
 
-    info!("Received {:#?}", initial_value);
+    info!("Create value {:#?}", initial_value);
 
     let producer = producer.lock().await;
     let command_id = Uuid::new_v4();
     let value_id = Uuid::new_v4();
     let command = Command::CREATE_VALUE { id: command_id,
-                                          data: Value { id : value_id,
+                                          data: Value { value_id : value_id,
                                                         value : initial_value.value }};
-
     let payload : String = serde_json::to_string(&command).expect ("Could not serialize command");
 
     match producer.send(FutureRecord::to(&config.commands_topic)
@@ -44,19 +43,40 @@ pub async fn create_value(
         },
     };
 
-    Ok(warp::reply::json(&value_id))
+    Ok(warp::reply::with_status(warp::reply::json(&value_id),
+                                warp::http::StatusCode::ACCEPTED))
 }
 
-// TODO
-// pub async fn update_value(
-//     id: Uuid,
-//     operation : Operation,
-//     producer: Producer,
-//     config: Config
-// ) -> Result<impl warp::Reply, Infallible> {
+pub async fn update_value(
+    value_id: Uuid,
+    operation : ValueOperationInput,
+    producer: Producer,
+    config: Config
+) -> Result<impl warp::Reply, Infallible> {
 
-//     info!("Update value {:#?} with {:#?}", id, operation);
+    info!("Update value {:#?} with {:#?}", value_id, operation);
+
+    let producer = producer.lock().await;
+    let command_id = Uuid::new_v4();
+    let command = Command::UPDATE_VALUE { id: command_id,
+                                          data : UpdateOperation { value_id: value_id,
+                                                                   operation: operation.operation,
+                                                                   value: operation.value }};
+    let payload : String = serde_json::to_string(&command).expect ("Could not serialize command");
+
+    match producer.send(FutureRecord::to(&config.commands_topic)
+                        .payload(&payload)
+                        .key(&format!("{}", &command_id)),
+                        Duration::from_secs(0)).await {
+        Ok(_) => {
+            info!("Succesfully sent command {:#?} to topic {}", command, &config.commands_topic)
+        },
+        Err(why) => {
+            warn!("Error sending command: {:#?}", why)
+        },
+    };
 
 
-//     Ok(StatusCode::NOT_FOUND)
-// }
+
+    Ok(StatusCode::ACCEPTED)
+}
