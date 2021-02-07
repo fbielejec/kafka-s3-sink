@@ -1,20 +1,17 @@
 use crate::commands;
-use crate::utils::print_type_of;
-use serde_derive::{Deserialize, Serialize};
 use std::convert::Infallible;
 use warp::Filter;
-use warp::http::StatusCode;
 use uuid::Uuid;
-use log::{debug, info, warn, error};
 use crate::config::{Config};
 use crate::producer;
 use crate::producer::Producer;
 use std::sync::Arc;
 
-// writes to commands topic
-// enforces schema
-
+/// writes to commands topic
+/// enforces light schema validation
 pub async fn run (config: Arc<Config>) {
+
+    // TODO : ensure `commands` topic exists or create
 
     let config = &*config;
 

@@ -1,11 +1,10 @@
+use crate::config::{Config};
+use log::info;
 use rdkafka::config::ClientConfig;
-use rdkafka::message::OwnedHeaders;
-use rdkafka::producer::{FutureProducer, FutureRecord};
+use rdkafka::producer::FutureProducer;
 use rdkafka::util::get_rdkafka_version;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use log::{debug, info, warn, error};
-use crate::config::{Config};
 
 pub type Producer = Arc<Mutex<FutureProducer>>;
 

@@ -7,6 +7,6 @@ use uuid::Uuid;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(tag = "action")]
 pub enum Event {
-    VALUE_CREATED {id: Uuid, parent: Uuid, data: Value},
-    VALUE_UPDATED {id: Uuid, parent: Uuid, data: UpdateOperation}
+    ValueCreated {id: Uuid, parent: Uuid, data: Value},
+    ValueUpdated {id: Uuid, parent: Uuid, data: UpdateOperation}
 }

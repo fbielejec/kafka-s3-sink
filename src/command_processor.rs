@@ -1,6 +1,5 @@
-use crate::commands_schema::ActionType::{CREATE_VALUE, UPDATE_VALUE};
 use crate::commands_schema::{Command, Value, UpdateOperation};
-use crate::config::{Config, Load};
+use crate::config::Config;
 use crate::events_schema::Event;
 use crate::producer::Producer;
 use crate::producer;
@@ -8,15 +7,11 @@ use log::{debug, info, warn, error};
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
-use rdkafka::consumer::{CommitMode, Consumer, ConsumerContext, Rebalance};
+use rdkafka::consumer::{CommitMode, Consumer, ConsumerContext};
 use rdkafka::error::KafkaResult;
-use rdkafka::message::OwnedHeaders;
-use rdkafka::message::{Headers, Message};
-use rdkafka::producer::{FutureProducer, FutureRecord};
+use rdkafka::message::Message;
+use rdkafka::producer::FutureRecord;
 use rdkafka::topic_partition_list::{TopicPartitionList, Offset};
-use rdkafka::util::{get_rdkafka_version, Timeout} ;
-use rusqlite::NO_PARAMS;
-use rusqlite::{Connection, Result};
 use serde_json;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -28,13 +23,14 @@ struct CustomContext;
 impl ClientContext for CustomContext {}
 
 impl ConsumerContext for CustomContext {
-    fn commit_callback(&self, result: KafkaResult<()>, offsets: &TopicPartitionList) {
+    fn commit_callback(&self, _result: KafkaResult<()>, offsets: &TopicPartitionList) {
         debug!("Committing offsets {:?}", offsets);
     }
 }
 
 pub async fn run (config : Arc<Config>) {
 
+    // TODO : ensure topic "events" exists
     let Config { broker, commands_group_id, commands_topic, .. } = &*config;
     let context = CustomContext;
 
@@ -57,14 +53,15 @@ pub async fn run (config : Arc<Config>) {
     let mut topic_map: HashMap<(String, i32), Offset> = HashMap::new ();
     topic_map.insert((String::from (commands_topic), 0), Offset::Beginning);
     let tpl : TopicPartitionList = TopicPartitionList::from_topic_map (&topic_map).unwrap ();
-    consumer.assign (&tpl);
+    consumer.assign (&tpl).expect ("Could not set topic partition list");
 
     loop {
 
         // TODO : store offset
 
         match consumer.recv().await {
-            Err(why) => error!("Failed to read message: {}", why),
+            // NOTE: panics if comands topic does not exist
+            Err(why) => panic!("Failed to read message: {}", why),
             Ok(m) => {
                 match m.payload_view::<str>() {
                     None => {
@@ -81,8 +78,8 @@ pub async fn run (config : Arc<Config>) {
 
                                 // run validation and emit events
                                 match command {
-                                    Command::CREATE_VALUE{id, data} => validate_create_value (id, data, &config.clone (), &mut state, producer.clone ()).await,
-                                    Command::UPDATE_VALUE {id, data} => validate_update_value (id, data, &config.clone (), &mut state, producer.clone ()).await,
+                                    Command::CreateValue {id, data} => validate_create_value (id, data, &config.clone (), &mut state, producer.clone ()).await,
+                                    Command::UpdateValue {id, data} => validate_update_value (id, data, &config.clone (), &mut state, producer.clone ()).await,
                                 };
                             },
                             Err (why) => {
@@ -128,9 +125,9 @@ async fn validate_create_value (
         false => {
             // emit event
             let event_id = Uuid::new_v4();
-            let event = Event::VALUE_CREATED { id: event_id,
-                                               parent: command_id,
-                                               data: data.clone () };
+            let event = Event::ValueCreated {id: event_id,
+                                             parent: command_id,
+                                             data: data.clone ()};
             let payload : String = serde_json::to_string(&event).expect ("Could not serialize event");
             let producer = producer.lock().await;
 
@@ -167,9 +164,9 @@ async fn validate_update_value (
         true => {
             // emit event
             let event_id = Uuid::new_v4();
-            let event = Event::VALUE_UPDATED { id: event_id,
-                                               parent: command_id,
-                                               data: data.clone () };
+            let event = Event::ValueUpdated {id: event_id,
+                                             parent: command_id,
+                                             data: data.clone ()};
 
             let payload : String = serde_json::to_string(&event).expect ("Could not serialize event");
             let producer = producer.lock().await;

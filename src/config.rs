@@ -1,4 +1,3 @@
-use log::{debug, info, warn, error};
 use std::env;
 
 #[derive(Default, Debug, Clone)]

@@ -5,18 +5,13 @@ mod commands_schema;
 mod config;
 mod inputs_schema;
 mod producer;
-mod utils;
 mod events_schema;
 
 use config::{Config, Load};
-use log::{debug, info, warn, error};
-use std::boxed::Box;
+use log::info;
 use std::env;
 use std::sync::Arc;
-use std::thread;
-use std::time::{Instant, Duration};
 use tokio::runtime::Runtime;
-use tokio::time;
 
 fn main() {
 
