@@ -7,11 +7,11 @@ It is an implementation of a distributed calculator.
 
 There are two commands availiable:
 
-- *POST* ~/values~ accepts ~{"value" : <f64>}~ returns =HTTP/202= and an id (UUID) of the accepted value.
-- *PUT* ~/values/:id~ accepts ~={"operation" : <OPERATION>, "value" : 3}~ where OPERATION can be ADD or MULTIPLY, it returns =HTTP/202=
+- *POST* ~/values~ accepts ~{"value" : <f64>}~ returns =HTTP/202= and an =id= (UUID) of the accepted value.
+- *PUT* ~/values/{id}~ accepts ~={"operation" : <OPERATION>, "value" : 3}~ where OPERATION can be =ADD= or =MULTIPLY=, it returns =HTTP/202=
 
 There is one query path constructed from events:
-- *GET* ~/values/:id~ returns ~{"value" : <current-value>}~
+- *GET* ~/values/{id}~ returns ~{"value" : <current-value>}~
 
 * Prerequisites
 Install confluent hub client:
