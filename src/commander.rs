@@ -20,8 +20,7 @@ pub async fn run (config: Arc<Config>) {
 
     let producer = producer::init (&config);
     let routes = create_value(producer.clone (), config.clone ())
-        .or(update_value(producer.clone (), config.clone ()))
-        ;
+        .or(update_value(producer.clone (), config.clone ()));
 
     warp::serve(routes)
         .run(([127, 0, 0, 1], 3030))

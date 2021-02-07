@@ -118,7 +118,7 @@ async fn validate_create_value (
     producer : Producer
 ) {
 
-    info!("validating command: {:?}", data);
+    info!("validating command {} with data {:?}", command_id, data);
 
     let value_id = data.value_id;
     match state.contains_key(&value_id) {
@@ -140,7 +140,7 @@ async fn validate_create_value (
                                 Duration::from_secs(0)).await {
                 Ok(_) => {
                     info!("Succesfully sent event {:#?} to topic {}", event, &config.events_topic);
-                    state.insert (command_id, data.value);
+                    state.insert (value_id, data.value);
                 },
                 Err(why) => warn!("Error sending event: {:#?}", why)
             };
@@ -157,7 +157,7 @@ async fn validate_update_value (
     producer : Producer
 ) {
 
-    info!("validating command: {:?}", data);
+    info!("validating command {} with data {:?}", command_id, data);
 
     let value_id = data.value_id;
     match state.contains_key(&value_id) {
