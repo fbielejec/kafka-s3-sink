@@ -34,15 +34,16 @@ fn main() {
     rt.block_on(async {
 
         let config_rc1 = Arc::clone(&config);
-        let t1 = tokio::spawn(async move {
-            commander::run ( config_rc1 ).await;
+        let t1 = tokio::spawn(async {
+            commander::run (config_rc1).await;
         });
 
         let config_rc2 = Arc::clone(&config);
-        let t2 = tokio::spawn(async move {
-            command_processor::run ( config_rc2 ).await;
-
+        let t2 = tokio::spawn(async {
+            command_processor::run (config_rc2).await;
         });
+
+        // TODO : materialized view
 
         t1.await.expect ("Ooops!");
         t2.await.expect ("Ooops!");

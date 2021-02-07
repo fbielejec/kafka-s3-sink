@@ -2,8 +2,6 @@
 #+SUBTITLE: event sourcing research repository
 
 * Prerequisites
-** TODO Event Sourcing
-** Software
 Install confluent hub client:
 
 #+BEGIN_SRC bash
@@ -33,8 +31,9 @@ Send some commands:
 
 #+BEGIN_SRC bash
 curl -d '{"value": 2}' -H "Content-Type: application/json" -X POST http://localhost:3030/values
+# => 2753b941-eb10-497c-b58c-2b3dec1eeeef
 #+END_SRC
 
 #+BEGIN_SRC bash
-curl -d '{"operation": "ADD", "value": 3}' -H "Content-Type: application/json" -X PUT http://localhost:3030/values/123e4567-e89b-12d3-a456-426614174000
+curl -d '{"operation": "ADD", "value": 3}' -H "Content-Type: application/json" -X PUT http://localhost:3030/values/2753b941-eb10-497c-b58c-2b3dec1eeeef
 #+END_SRC
