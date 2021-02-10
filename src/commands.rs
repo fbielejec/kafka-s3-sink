@@ -31,12 +31,8 @@ pub async fn create_value(
                         .payload(&payload)
                         .key(&format!("{}", &command_id)),
                         Duration::from_secs(0)).await {
-        Ok(_) => {
-            info!("Succesfully sent command {:#?} to topic {}", command, &config.commands_topic)
-        },
-        Err(why) => {
-            warn!("Error sending command: {:#?}", why)
-        },
+        Ok(_) => info!("Succesfully sent command {:#?} to topic {}", command, &config.commands_topic),
+        Err(why) => warn!("Error sending command: {:#?}", why)
     };
 
     Ok(warp::reply::with_status(warp::reply::json(&value_id),
@@ -64,15 +60,9 @@ pub async fn update_value(
                         .payload(&payload)
                         .key(&format!("{}", &command_id)),
                         Duration::from_secs(0)).await {
-        Ok(_) => {
-            info!("Succesfully sent command {:#?} to topic {}", command, &config.commands_topic)
-        },
-        Err(why) => {
-            warn!("Error sending command: {:#?}", why)
-        },
+        Ok(_) => info!("Succesfully sent command {:#?} to topic {}", command, &config.commands_topic),
+        Err(why) => warn!("Error sending command: {:#?}", why)
     };
-
-
 
     Ok(StatusCode::ACCEPTED)
 }

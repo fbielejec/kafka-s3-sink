@@ -6,6 +6,7 @@ use rdkafka::util::get_rdkafka_version;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+// allow having one producer shared across threads
 pub type Producer = Arc<Mutex<FutureProducer>>;
 
 pub fn init(config : &Config) -> Producer {

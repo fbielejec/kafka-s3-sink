@@ -10,7 +10,7 @@ There are two commands availiable:
 - *POST* ~/values~ accepts ~{"value" : <f64>}~ returns =HTTP/202= and an =id= (UUID) of the accepted value.
 - *PUT* ~/values/{id}~ accepts ~={"operation" : <OPERATION>, "value" : 3}~ where OPERATION can be =ADD= or =MULTIPLY=, it returns =HTTP/202=
 
-There is one query path constructed from events:
+There is one query path constructed from the events:
 - *GET* ~/values/{id}~ returns ~{"value" : <current-value>}~
 
 * Prerequisites
@@ -48,4 +48,11 @@ curl -d '{"value": 2}' -H "Content-Type: application/json" -X POST http://localh
 
 #+BEGIN_SRC bash
 curl -d '{"operation": "ADD", "value": 3}' -H "Content-Type: application/json" -X PUT http://localhost:3030/values/2753b941-eb10-497c-b58c-2b3dec1eeeef
+#+END_SRC
+
+
+Query the materialized view:
+
+#+BEGIN_SRC bash
+curl http://localhost:3030/values/2753b941-eb10-497c-b58c-2b3dec1eeeef
 #+END_SRC

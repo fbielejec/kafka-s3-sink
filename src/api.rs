@@ -1,23 +1,23 @@
 use crate::commands;
-use std::convert::Infallible;
-use warp::Filter;
-use uuid::Uuid;
+use crate::queries;
 use crate::config::{Config};
-use crate::producer;
+use crate::db::Db;
 use crate::producer::Producer;
+use crate::producer;
+use std::convert::Infallible;
 use std::sync::Arc;
+use uuid::Uuid;
+use warp::Filter;
 
 /// writes to commands topic
 /// enforces light schema validation
-pub async fn run (config: Arc<Config>) {
-
-    // TODO : ensure `commands` topic exists or create
+pub async fn run (config: Arc<Config>, db: Db) {
 
     let config = &*config;
-
     let producer = producer::init (&config);
     let routes = create_value(producer.clone (), config.clone ())
-        .or(update_value(producer.clone (), config.clone ()));
+        .or(update_value(producer.clone (), config.clone ()))
+        .or (query_value (db));
 
     warp::serve(routes)
         .run(([127, 0, 0, 1], 3030))
@@ -50,10 +50,23 @@ fn update_value(
         .and_then(commands::update_value)
 }
 
+fn query_value(
+    db : Db
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("values" / Uuid)
+        .and(warp::get())
+        .and(with_db(db))
+        .and_then(queries::get_value)
+}
+
 fn with_producer(producer: Producer) -> impl Filter<Extract = (Producer,), Error = Infallible> + Clone {
     warp::any().map(move || producer.clone())
 }
 
 fn with_config(config: Config) -> impl Filter<Extract = (Config,), Error = Infallible> + Clone {
     warp::any().map(move || config.clone())
+}
+
+fn with_db(db: Db) -> impl Filter<Extract = (Db,), Error = Infallible> + Clone {
+    warp::any().map(move || db.clone())
 }

@@ -2,8 +2,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use crate::inputs_schema::{ OperationType };
 
-// TODO : timestamp
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Value {
     pub value_id: Uuid,

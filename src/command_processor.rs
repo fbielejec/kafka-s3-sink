@@ -1,9 +1,11 @@
 use crate::commands_schema::{Command, Value, UpdateOperation};
 use crate::config::Config;
+use crate::consumer;
 use crate::events_schema::Event;
 use crate::producer::Producer;
 use crate::producer;
 use log::{debug, info, warn, error};
+use maplit::hashmap;
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
@@ -18,40 +20,24 @@ use std::sync::Arc;
 use std::time::Duration;
 use uuid::Uuid;
 
-struct CustomContext;
-
-impl ClientContext for CustomContext {}
-
-impl ConsumerContext for CustomContext {
-    fn commit_callback(&self, _result: KafkaResult<()>, offsets: &TopicPartitionList) {
-        debug!("Committing offsets {:?}", offsets);
-    }
-}
-
 pub async fn run (config : Arc<Config>) {
 
-    // TODO : ensure topic "events" exists
     let Config { broker, commands_group_id, commands_topic, .. } = &*config;
-    let context = CustomContext;
 
+    // in-memory state for validating commands
     let mut state = HashMap::<Uuid, f64>::new();
     let producer = producer::init (&config);
-    let consumer: StreamConsumer<CustomContext> = ClientConfig::new()
-        .set("group.id", commands_group_id)
-        .set("bootstrap.servers", broker)
-        .set("enable.partition.eof", "false")
-        .set("session.timeout.ms", "6000")
-        .set("enable.auto.commit", "false")
-        .set_log_level(RDKafkaLogLevel::Debug)
-        .create_with_context(context)
-        .expect("Consumer creation failed");
+    let consumer = consumer::init (String::from (broker), String::from (commands_group_id));
 
     consumer.subscribe(&[&commands_topic])
-        .expect("Can't subscribe to specified topic");
+        .expect("Can't subscribe to the specified topic");
 
-    // set offset for replaying
-    let mut topic_map: HashMap<(String, i32), Offset> = HashMap::new ();
-    topic_map.insert((String::from (commands_topic), 0), Offset::Beginning);
+    // NOTE : sets offset for replaying all commands on system restart, in a production system you would rather use the offset stored in Kafka
+    // and a persistent state for command validation
+    let topic_map = hashmap!{
+        (String::from (commands_topic), 0) => Offset::Beginning
+    };
+
     let tpl : TopicPartitionList = TopicPartitionList::from_topic_map (&topic_map).unwrap ();
     consumer.assign (&tpl).expect ("Could not set topic partition list");
 
@@ -61,19 +47,18 @@ pub async fn run (config : Arc<Config>) {
 
         match consumer.recv().await {
             // NOTE: panics if comands topic does not exist
-            Err(why) => panic!("Failed to read message: {}", why),
+            Err(why) => panic!("Failed to read message from {:?} : {}", &tpl, why),
             Ok(m) => {
                 match m.payload_view::<str>() {
-                    None => {
-                        warn!("Empty command payload");
-                    },
+                    None => warn!("Empty command payload"),
                     Some(Ok(payload)) => {
 
-                        info!("payload: {}", payload);
+                        debug!("payload: {}", payload);
 
                         // TODO : read avro
                         match serde_json::from_str::<Command>(payload) {
                             Ok (command) => {
+
                                 info!("Received command: {:?}, partition: {}, offset: {}, timestamp: {:?}", command, m.partition(), m.offset(), m.timestamp());
 
                                 // run validation and emit events
@@ -82,22 +67,16 @@ pub async fn run (config : Arc<Config>) {
                                     Command::UpdateValue {id, data} => validate_update_value (id, data, &config.clone (), &mut state, producer.clone ()).await,
                                 };
                             },
-                            Err (why) => {
-                                error!("Could not deserialize command: {:?}", why);
-                            }
+                            Err (why) => error!("Could not deserialize command: {:?}", why)
                         };
 
                     },
-                    Some(Err(e)) => {
-                        error!("Error while deserializing command payload: {:?}", e);
-                    }
+                    Some(Err(e)) => error!("Error while deserializing command payload: {:?}", e)
                 };
 
                 match consumer.commit_message(&m, CommitMode::Async) {
                     Err(why) => error!("Failed to commit message offset: {}", why),
-                    Ok (_) => {
-                        debug!("Commited message offset: {}", m.offset ());
-                    }
+                    Ok (_) => debug!("Commited message offset: {}", m.offset ())
                 };
 
             }
@@ -119,9 +98,7 @@ async fn validate_create_value (
 
     let value_id = data.value_id;
     match state.contains_key(&value_id) {
-        true => {
-            error!("command {} rejected: value with id {} already exists", command_id, value_id);
-        },
+        true => error!("command {} rejected: value with id {} already exists", command_id, value_id),
         false => {
             // emit event
             let event_id = Uuid::new_v4();
@@ -158,9 +135,7 @@ async fn validate_update_value (
 
     let value_id = data.value_id;
     match state.contains_key(&value_id) {
-        false => {
-            error!("command {} rejected: value with id {} does not exist", command_id, value_id);
-        },
+        false => error!("command {} rejected: value with id {} does not exist", command_id, value_id),
         true => {
             // emit event
             let event_id = Uuid::new_v4();
