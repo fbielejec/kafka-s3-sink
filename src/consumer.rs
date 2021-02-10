@@ -1,10 +1,10 @@
-use log::{debug, info, warn, error};
+use log::debug;
 use rdkafka::client::ClientContext;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::stream_consumer::StreamConsumer;
-use rdkafka::consumer::{CommitMode, Consumer, ConsumerContext};
+use rdkafka::consumer::ConsumerContext;
 use rdkafka::error::KafkaResult;
-use rdkafka::topic_partition_list::{TopicPartitionList, Offset};
+use rdkafka::topic_partition_list::TopicPartitionList;
 
 pub struct CustomContext;
 

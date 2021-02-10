@@ -1,22 +1,16 @@
+use crate::commands_schema::{Value, UpdateOperation};
 use crate::config::Config;
 use crate::consumer;
-use crate::db;
 use crate::db::Db;
+use crate::db;
 use crate::events_schema::Event;
+use crate::inputs_schema::OperationType ;
 use log::{debug, info, warn, error};
 use maplit::hashmap;
-use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
-use rdkafka::consumer::stream_consumer::StreamConsumer;
-use rdkafka::consumer::{CommitMode, Consumer, ConsumerContext};
-use rdkafka::error::KafkaResult;
+use rdkafka::consumer::{CommitMode, Consumer};
 use rdkafka::message::Message;
-use rdkafka::producer::FutureRecord;
 use rdkafka::topic_partition_list::{TopicPartitionList, Offset};
-use std::collections::HashMap;
 use std::sync::Arc;
-use uuid::Uuid;
-use crate::commands_schema::{Value, UpdateOperation};
-use crate::inputs_schema::{ OperationType };
 
 pub async fn run (config : Arc<Config>, db: Db) {
 

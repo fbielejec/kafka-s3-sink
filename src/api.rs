@@ -50,6 +50,7 @@ fn update_value(
         .and_then(commands::update_value)
 }
 
+/// GET /values/:id { "value" : 2 }
 fn query_value(
     db : Db
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {

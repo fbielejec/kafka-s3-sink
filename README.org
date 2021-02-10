@@ -47,12 +47,14 @@ curl -d '{"value": 2}' -H "Content-Type: application/json" -X POST http://localh
 #+END_SRC
 
 #+BEGIN_SRC bash
-curl -d '{"operation": "ADD", "value": 3}' -H "Content-Type: application/json" -X PUT http://localhost:3030/values/2753b941-eb10-497c-b58c-2b3dec1eeeef
+curl -d '{"operation": "ADD", "value": 2}' -H "Content-Type: application/json" -X PUT http://localhost:3030/values/2753b941-eb10-497c-b58c-2b3dec1eeeef
+
+curl -d '{"operation": "MULTIPLY", "value": 3}' -H "Content-Type: application/json" -X PUT http://localhost:3030/values/2753b941-eb10-497c-b58c-2b3dec1eeeef
 #+END_SRC
 
 
 Query the materialized view:
 
 #+BEGIN_SRC bash
-curl http://localhost:3030/values/2753b941-eb10-497c-b58c-2b3dec1eeeef
+curl -X GET -H "Content-Type: application/json" http://localhost:3030/values/2753b941-eb10-497c-b58c-2b3dec1eeeef
 #+END_SRC

@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-use log::{debug, info, warn, error};
-use maplit::hashmap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
