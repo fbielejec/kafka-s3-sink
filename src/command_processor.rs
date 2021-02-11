@@ -39,8 +39,6 @@ pub async fn run (config : Arc<Config>) {
 
     loop {
 
-        // TODO : store offset
-
         match consumer.recv().await {
             // NOTE: panics if comands topic does not exist
             Err(why) => panic!("Failed to read message from {:?} : {}", &tpl, why),
@@ -55,7 +53,7 @@ pub async fn run (config : Arc<Config>) {
                         match serde_json::from_str::<Command>(payload) {
                             Ok (command) => {
 
-                                info!("Received command: {:?}, partition: {}, offset: {}, timestamp: {:?}", command, m.partition(), m.offset(), m.timestamp());
+                                info!("Received command: {:#?}, partition: {}, offset: {}, timestamp: {:?}", command, m.partition(), m.offset(), m.timestamp());
 
                                 // run validation and emit events
                                 match command {

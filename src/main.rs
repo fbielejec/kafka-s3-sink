@@ -26,31 +26,36 @@ fn main() {
 
     info!("{:#?}", &config);
 
+    // TODO : create topics
+
     // Create the runtime
     let rt = Runtime::new().unwrap ();
     let db = db::init ();
     // Spawn the root task
     rt.block_on(async {
 
+        let mut tasks = Vec::with_capacity(3);
+
         let db_rc1 = Arc::clone (&db);
         let config_rc1 = Arc::clone(&config);
-        let t1 = tokio::spawn(async {
+        tasks.push (tokio::spawn(async {
             api::run (config_rc1, db_rc1).await;
-        });
+        }));
 
         let config_rc2 = Arc::clone(&config);
-        let t2 = tokio::spawn(async {
+        tasks.push (tokio::spawn(async {
             command_processor::run (config_rc2).await;
-        });
+        }));
 
         let config_rc3 = Arc::clone(&config);
         let db_rc2 = Arc::clone (&db);
-        let t3 = tokio::spawn(async {
+        tasks.push (tokio::spawn(async {
             materialized_view::run (config_rc3, db_rc2).await;
-        });
+        }));
 
-        t1.await.expect ("Ooops!");
-        t2.await.expect ("Ooops!");
-        t3.await.expect ("Ooops!");
+        for t in tasks {
+            t.await.expect ("Ooops!");
+        }
+
     });
 }

@@ -27,7 +27,7 @@ pub fn init (broker : String, group_id : String) -> CustomConsumer {
         .set("bootstrap.servers", broker)
         .set("enable.partition.eof", "false")
         .set("session.timeout.ms", "6000")
-        .set("enable.auto.commit", "false")
+        .set("enable.auto.commit", "false") // only commit the offsets explicitly
         .set_log_level(RDKafkaLogLevel::Debug)
         .create_with_context(context)
         .expect("Consumer creation failed")

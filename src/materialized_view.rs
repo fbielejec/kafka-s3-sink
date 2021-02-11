@@ -44,7 +44,7 @@ pub async fn run (config : Arc<Config>, db: Db) {
                         // TODO : read avro
                         match serde_json::from_str::<Event>(payload) {
                             Ok (event) => {
-                                info!("Received event: {:?}, partition: {}, offset: {}, timestamp: {:?}", event, m.partition(), m.offset(), m.timestamp());
+                                info!("Received event: {:#?}, partition: {}, offset: {}, timestamp: {:?}", event, m.partition(), m.offset(), m.timestamp());
 
                                 // run validation and emit events
                                 match event {
