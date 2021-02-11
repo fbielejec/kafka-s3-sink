@@ -82,8 +82,7 @@ consumers .> views
 #+RESULTS: fig:high-level-architecture-diagram
 [[file:architecture_diagram.png]]
 
-#+RESULTS: fig:example-fig
-[[file:system_architecture.png]]
+#+html: <p align="center"><img src="architecture_diagram.png"/></p>
 
 * Development
 
@@ -104,14 +103,9 @@ Send some commands:
 #+BEGIN_SRC bash
 curl -d '{"value": 2}' -H "Content-Type: application/json" -X POST http://localhost:3030/values
 # => 2753b941-eb10-497c-b58c-2b3dec1eeeef
-#+END_SRC
-
-#+BEGIN_SRC bash
 curl -d '{"operation": "ADD", "value": 2}' -H "Content-Type: application/json" -X PUT http://localhost:3030/values/2753b941-eb10-497c-b58c-2b3dec1eeeef
-
 curl -d '{"operation": "MULTIPLY", "value": 3}' -H "Content-Type: application/json" -X PUT http://localhost:3030/values/2753b941-eb10-497c-b58c-2b3dec1eeeef
 #+END_SRC
-
 
 Query the materialized view:
 
