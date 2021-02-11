@@ -24,7 +24,67 @@ export PATH="<path-to>/confluent-hub-client-latest/bin:$PATH"
 confluent-hub help
 #+END_SRC
 
-* TODO Architecture
+* DONE Architecture
+
+#+CAPTION: High level diagram
+#+LABEL: fig:high-level-architecture-diagram
+#+ATTR_LATEX: :placement [th]
+#+begin_src plantuml :file architecture_diagram.png
+[Client]
+
+package "API" {
+  package "/queries" {
+  [queries]
+  [subscriptions]
+  }
+  package "/commands" {
+    [Commander]
+  }
+}
+
+database "Message store" {
+  folder "Retention: forever" {
+    [commands topic] as ct
+  }  
+  [events topic] as et
+  [other topics]
+}
+
+package "Command Processor" {
+  [Command Handler] as CH
+  database "state" {
+    [Business model]
+  }
+}
+
+node "Aggregate views" {
+  [consumers]
+  database "views" {
+  }
+}
+
+Client .down.> Commander
+Client .down.> subscriptions
+Client .down.> queries
+queries <.down. views
+
+Commander .down.> ct : Commands 
+ct ..> CH : business logic
+CH ..> et : Events
+
+et .> subscriptions
+
+et .> consumers
+consumers .> views
+
+#+end_src
+
+#+RESULTS: fig:high-level-architecture-diagram
+[[file:architecture_diagram.png]]
+
+#+RESULTS: fig:example-fig
+[[file:system_architecture.png]]
+
 * Development
 
 Start docker containers:
