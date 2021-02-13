@@ -1,3 +1,4 @@
+mod admin;
 mod api;
 mod command_processor;
 mod commands;
@@ -31,6 +32,8 @@ fn main() {
     // Create the runtime
     let rt = Runtime::new().unwrap ();
     let db = db::init ();
+    let admin = admin::init (&config.broker);
+
     // Spawn the root task
     rt.block_on(async {
 
@@ -38,8 +41,9 @@ fn main() {
 
         let db_rc1 = Arc::clone (&db);
         let config_rc1 = Arc::clone(&config);
+        let admin_rc1 = Arc::clone (&admin);
         tasks.push (tokio::spawn(async {
-            api::run (config_rc1, db_rc1).await;
+            api::run (config_rc1, db_rc1, admin_rc1).await;
         }));
 
         let config_rc2 = Arc::clone(&config);

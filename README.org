@@ -3,6 +3,7 @@
 
 * About
 This repository is a study in [[https://martinfowler.com/eaaDev/EventSourcing.html][event sourcing]] and [[https://martinfowler.com/bliki/CQRS.html][CQRS]] architectures.
+See this [blog post](https://www.blog.nodrama.io/cqrs-and-event-sourcing/) for details.
 It is an implementation of a distributed calculator.
 
 There are two commands availiable:
